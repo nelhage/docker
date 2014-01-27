@@ -7,6 +7,7 @@ import (
 	flag "github.com/dotcloud/docker/pkg/mflag"
 	"github.com/dotcloud/docker/sysinit"
 	"github.com/dotcloud/docker/utils"
+	"github.com/nelhage/go.cli/completion"
 	"log"
 	"os"
 	"strings"
@@ -16,6 +17,16 @@ var (
 	GITCOMMIT string
 	VERSION   string
 )
+
+type completer struct{}
+
+func (c *completer) Complete(cl completion.CommandLine) []string {
+	if len(cl) == 1 {
+		cli := docker.NewDockerCli(os.Stdin, os.Stdout, os.Stderr, "", "")
+		return completion.SetCompleter(cli.AllCommands()).Complete(cl)
+	}
+	return nil
+}
 
 func main() {
 	if selfPath := utils.SelfPath(); selfPath == "/sbin/init" || selfPath == "/.dockerinit" {
@@ -44,6 +55,8 @@ func main() {
 	)
 	flag.Var(&flDns, []string{"#dns", "-dns"}, "Force docker to use specific DNS servers")
 	flag.Var(&flHosts, []string{"H", "-host"}, "Multiple tcp://host:port or unix://path/to/socket to bind in daemon mode, single connection otherwise")
+
+	completion.CompleteIfRequested(flag.CompleterWithFlags(flag.CommandLine, &completer{}))
 
 	flag.Parse()
 

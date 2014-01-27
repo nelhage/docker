@@ -55,6 +55,19 @@ func (cli *DockerCli) getMethod(name string) (func(...string) error, bool) {
 	return method.Interface().(func(...string) error), true
 }
 
+func (cli *DockerCli) AllCommands() []string {
+	var cmds []string
+	typ := reflect.TypeOf(cli)
+	for i := 0; i < typ.NumMethod(); i++ {
+		m := typ.Method(i)
+		if strings.HasPrefix(m.Name, "Cmd") {
+			cmd := strings.ToLower(m.Name[len("Cmd"):])
+			cmds = append(cmds, cmd)
+		}
+	}
+	return cmds
+}
+
 func ParseCommands(proto, addr string, args ...string) error {
 	cli := NewDockerCli(os.Stdin, os.Stdout, os.Stderr, proto, addr)
 
